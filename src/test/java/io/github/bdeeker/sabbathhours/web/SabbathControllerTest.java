@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
@@ -20,11 +21,12 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import io.github.bdeeker.sabbathhours.config.ValidationConfig;
 import io.github.bdeeker.sabbathhours.config.WebConfig;
 import io.github.bdeeker.sabbathhours.sabbath.SabbathService;
+import io.github.bdeeker.sabbathhours.security.SecurityConfig;
 import io.github.bdeeker.sabbathhours.solar.SolarCalculator;
 
-@WebMvcTest(SabbathController.class)
-@Import({SabbathService.class, SolarCalculator.class, SabbathResponseMapper.class, WebConfig.class,
-        ValidationConfig.class, MovableClockConfig.class})
+@WebMvcTest(controllers = SabbathController.class, excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class)
+@Import({SabbathService.class, SolarCalculator.class, SabbathLookup.class, SabbathResponseMapper.class, WebConfig.class,
+        ValidationConfig.class, SecurityConfig.class, MovableClockConfig.class})
 class SabbathControllerTest {
 
     /** Wednesday, 30 September 2026, noon in Silver Spring. */

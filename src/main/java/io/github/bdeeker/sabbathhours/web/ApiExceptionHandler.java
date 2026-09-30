@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import io.github.bdeeker.sabbathhours.location.LocationNotFoundException;
 
 /**
  * Turns every error into an RFC 9457 problem detail. Validation failures list each bad parameter
@@ -65,6 +68,22 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(invalid(List.of(new FieldProblem(field, formatHint(ex.getRequiredType())))));
     }
 
+    @ExceptionHandler(LocationNotFoundException.class)
+    public ProblemDetail handleNotFound(LocationNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Not found");
+        return problem;
+    }
+
+    /** Two writes to the same location raced; the loser must re-read and retry. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail handleConflict(OptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "The location was changed by another request. Fetch it again and retry.");
+        problem.setTitle("Conflict");
+        return problem;
+    }
+
     /** Domain-level rejections (e.g. coordinates that pass bean validation but not {@code GeoPoint}, such as NaN). */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
@@ -103,6 +122,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Map<String, String> FORMAT_HINTS = Map.of(
             "LocalDate", "must be a date in the form YYYY-MM-DD",
             "Instant", "must be an ISO-8601 instant such as 2026-10-02T22:00:00Z",
+            "UUID", "must be a UUID",
             "int", "must be a whole number",
             "Integer", "must be a whole number");
 
