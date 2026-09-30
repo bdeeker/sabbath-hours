@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import io.github.bdeeker.sabbathhours.solar.GeoPoint;
 import io.github.bdeeker.sabbathhours.solar.SolarCalculator;
+import io.github.bdeeker.sabbathhours.solar.SunsetOutcome;
 
 /**
  * Sabbath rules on top of the {@link SolarCalculator}: which Friday a date belongs to,
@@ -94,7 +96,19 @@ public class SabbathService {
     private SabbathWindow windowFor(GeoPoint point, ZoneId zone, LocalDate friday) {
         return new SabbathWindow(
                 friday,
-                solarCalculator.sunsetEndingDay(point, friday, zone),
-                solarCalculator.sunsetEndingDay(point, friday.plusDays(1), zone));
+                toPublishedMinute(solarCalculator.sunsetEndingDay(point, friday, zone)),
+                toPublishedMinute(solarCalculator.sunsetEndingDay(point, friday.plusDays(1), zone)));
+    }
+
+    /**
+     * Rounds a sunset to the nearest minute, the way almanacs publish it. Every window, and so every
+     * status decision, uses the rounded time, so the API never says "in Sabbath" at 18:48:50 while
+     * showing a start of 18:49.
+     */
+    private static SunsetOutcome toPublishedMinute(SunsetOutcome outcome) {
+        if (outcome instanceof SunsetOutcome.Sunset(Instant at)) {
+            return new SunsetOutcome.Sunset(at.plusSeconds(30).truncatedTo(ChronoUnit.MINUTES));
+        }
+        return outcome;
     }
 }
