@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +26,7 @@ import io.github.bdeeker.sabbathhours.web.SabbathResponses.UpcomingResult;
  * Sabbath times for any coordinates. Every endpoint takes {@code latitude}, {@code longitude},
  * and {@code timeZone} (an IANA ID) as query parameters; summaries follow {@code Accept-Language}.
  */
+@Tag(name = "Sabbath times", description = "Sabbath times for any coordinates")
 @RestController
 @RequestMapping("/api/v1/sabbath")
 public class SabbathController {
@@ -36,7 +40,7 @@ public class SabbathController {
     /** The Sabbath for the week of {@code date} (default: today at the location). */
     @GetMapping
     public SabbathResult forWeek(
-            @Valid LocationQuery location,
+            @Valid @ParameterObject LocationQuery location,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             Locale locale) {
         return lookup.forWeek(location, date, locale);
@@ -45,7 +49,7 @@ public class SabbathController {
     /** {@code count} consecutive Sabbaths starting with the week of {@code from} (default: today). */
     @GetMapping("/upcoming")
     public UpcomingResult upcoming(
-            @Valid LocationQuery location,
+            @Valid @ParameterObject LocationQuery location,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(defaultValue = "4") @Min(1) @Max(SabbathService.MAX_UPCOMING) int count,
             Locale locale) {
@@ -55,7 +59,7 @@ public class SabbathController {
     /** Whether the Sabbath is in progress at {@code at} (an ISO-8601 instant; default: now). */
     @GetMapping("/status")
     public StatusResult status(
-            @Valid LocationQuery location,
+            @Valid @ParameterObject LocationQuery location,
             @RequestParam(required = false) Instant at,
             Locale locale) {
         return lookup.status(location, at, locale);

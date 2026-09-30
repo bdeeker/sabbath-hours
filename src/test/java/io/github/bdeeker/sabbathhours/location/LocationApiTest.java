@@ -101,6 +101,18 @@ class LocationApiTest {
         }
 
         @Test
+        void createResponseAndLaterReadsAgreeOnTimestamps() {
+            clock.set(T0.plusNanos(123_456_789));
+
+            MvcTestResult created = post(SILVER_SPRING_JSON, KEY);
+            String id = created.getResponse().getHeader("Location").substring("/api/v1/locations/".length());
+
+            assertThat(created).bodyJson().extractingPath("$.createdAt").isEqualTo("2026-09-30T16:00:00.123Z");
+            assertThat(mvc.get().uri("/api/v1/locations/" + id).exchange())
+                    .bodyJson().extractingPath("$.createdAt").isEqualTo("2026-09-30T16:00:00.123Z");
+        }
+
+        @Test
         void rejectsANameOfOnlyUnicodeSpaces() {
             // Regression guard: @NotBlank and the service's strip() must agree on what "blank" means (both use
             // Character.isWhitespace), or an em space (U+2003) would pass validation and then hit the database check.

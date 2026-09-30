@@ -1,6 +1,8 @@
 package io.github.bdeeker.sabbathhours.location;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -35,13 +37,13 @@ public class LocationService {
 
     @Transactional
     public SavedLocation create(String name, double latitude, double longitude, String timeZone) {
-        return repository.save(new SavedLocation(name.strip(), latitude, longitude, timeZone, clock.instant()));
+        return repository.save(new SavedLocation(name.strip(), latitude, longitude, timeZone, now()));
     }
 
     @Transactional
     public SavedLocation update(UUID id, String name, double latitude, double longitude, String timeZone) {
         SavedLocation location = get(id);
-        location.update(name.strip(), latitude, longitude, timeZone, clock.instant());
+        location.update(name.strip(), latitude, longitude, timeZone, now());
         // Flush now so an optimistic-lock conflict surfaces here, inside the request, as a 409.
         return repository.saveAndFlush(location);
     }
@@ -49,5 +51,13 @@ public class LocationService {
     @Transactional
     public void delete(UUID id) {
         repository.delete(get(id));
+    }
+
+    /**
+     * Milliseconds, not the clock's full nanoseconds: the database keeps microseconds at most, so a finer value
+     * would make the POST response disagree with every later GET of the same location.
+     */
+    private Instant now() {
+        return clock.instant().truncatedTo(ChronoUnit.MILLIS);
     }
 }

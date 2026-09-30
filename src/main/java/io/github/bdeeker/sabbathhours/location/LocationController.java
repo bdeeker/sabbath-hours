@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.github.bdeeker.sabbathhours.config.OpenApiConfig;
 import io.github.bdeeker.sabbathhours.location.LocationDtos.LocationRequest;
 import io.github.bdeeker.sabbathhours.location.LocationDtos.LocationResponse;
 import io.github.bdeeker.sabbathhours.location.LocationDtos.PageResponse;
@@ -37,6 +41,7 @@ import io.github.bdeeker.sabbathhours.web.SabbathResponses.UpcomingResult;
  * Saved locations. Reading is public; creating, replacing, and deleting require the write API key
  * (see {@code security/SecurityConfig}).
  */
+@Tag(name = "Saved locations", description = "Save a place once, then look up its Sabbath times by id")
 @RestController
 @RequestMapping("/api/v1/locations")
 public class LocationController {
@@ -63,6 +68,7 @@ public class LocationController {
         return LocationResponse.of(locations.get(id));
     }
 
+    @SecurityRequirement(name = OpenApiConfig.API_KEY_SCHEME)
     @PostMapping
     public ResponseEntity<LocationResponse> create(@Valid @RequestBody LocationRequest request) {
         SavedLocation saved = locations.create(request.name(), request.latitude(), request.longitude(), request.timeZone());
@@ -70,12 +76,14 @@ public class LocationController {
         return ResponseEntity.created(URI.create("/api/v1/locations/" + saved.getId())).body(LocationResponse.of(saved));
     }
 
+    @SecurityRequirement(name = OpenApiConfig.API_KEY_SCHEME)
     @PutMapping("/{id}")
     public LocationResponse replace(@PathVariable UUID id, @Valid @RequestBody LocationRequest request) {
         return LocationResponse.of(
                 locations.update(id, request.name(), request.latitude(), request.longitude(), request.timeZone()));
     }
 
+    @SecurityRequirement(name = OpenApiConfig.API_KEY_SCHEME)
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {

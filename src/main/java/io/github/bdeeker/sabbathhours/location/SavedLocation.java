@@ -46,10 +46,18 @@ public class SavedLocation {
     public SavedLocation(String name, double latitude, double longitude, String timeZone, Instant now) {
         this.id = UUID.randomUUID();
         this.createdAt = now;
-        update(name, latitude, longitude, timeZone, now);
+        apply(name, latitude, longitude, timeZone, now);
     }
 
     public void update(String name, double latitude, double longitude, String timeZone, Instant now) {
+        apply(name, latitude, longitude, timeZone, now);
+    }
+
+    /**
+     * Private so the constructor never calls a method a subclass could override. Hibernate subclasses
+     * entities for lazy proxies, so an overridable call here could run before the object is built.
+     */
+    private void apply(String name, double latitude, double longitude, String timeZone, Instant now) {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;

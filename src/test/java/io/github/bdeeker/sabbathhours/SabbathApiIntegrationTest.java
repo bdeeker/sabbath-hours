@@ -7,10 +7,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Calls the running application over real HTTP, so the actual JSON serializer, error handling,
@@ -77,6 +82,25 @@ class SabbathApiIntegrationTest {
                 .header("Accept-Language", "es").GET().build();
         assertThat(http.send(good, HttpResponse.BodyHandlers.ofString()).body())
                 .contains("El sábado comienza el viernes 2 de octubre a las 18:49");
+    }
+
+    @Test
+    void publishesAnAccurateOpenApiDescription() throws Exception {
+        HttpResponse<String> response = get("/v3/api-docs");
+        assertThat(response.statusCode()).isEqualTo(200);
+
+        JsonNode doc = JsonMapper.builder().build().readTree(response.body());
+        JsonNode sabbathParams = doc.at("/paths/~1api~1v1~1sabbath/get/parameters");
+        List<String> names = new ArrayList<>();
+        sabbathParams.forEach(p -> names.add(p.get("name").asString()));
+        // The LocationQuery record is flattened into real query parameters; the Locale argument is not a parameter.
+        assertThat(names).containsExactlyInAnyOrder("latitude", "longitude", "timeZone", "date");
+
+        assertThat(doc.at("/components/securitySchemes/writeApiKey/name").asString()).isEqualTo("X-API-Key");
+        assertThat(doc.at("/paths/~1api~1v1~1locations/post/security").isMissingNode()).isFalse();
+        assertThat(doc.at("/paths/~1api~1v1~1locations/get/security").isMissingNode()).isTrue();
+
+        assertThat(get("/swagger-ui/index.html").statusCode()).isEqualTo(200);
     }
 
     @Test

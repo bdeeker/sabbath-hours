@@ -13,21 +13,25 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>sabbath-hours</name>
 	<description>Sunset-based Sabbath hours REST API</description>
-	<url/>
+	<url>https://github.com/bdeeker/sabbath-hours</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<name>Brian Deeker</name>
+			<url>https://github.com/bdeeker</url>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<url>https://github.com/bdeeker/sabbath-hours</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<springdoc.version>3.1.1</springdoc.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -57,6 +61,11 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
 		</dependency>
 
 		<dependency>
@@ -106,6 +115,19 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<!-- Every javac lint check on, and any warning fails the build.
+				     "processing" is off because it only reports annotations no processor claims. -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<compilerArgs>
+						<arg>-Xlint:all,-processing</arg>
+					</compilerArgs>
+					<failOnWarning>true</failOnWarning>
+					<showWarnings>true</showWarnings>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

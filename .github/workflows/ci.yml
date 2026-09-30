@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: the build only needs to read the repository.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          # A throwaway container that exists only for this job; not a secret.
+          POSTGRES_DB: sabbath_hours_test
+          POSTGRES_USER: sabbath
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sabbath -d sabbath_hours_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      # Actions are pinned to full commit SHAs (tag in the comment) so a moved tag can't change what runs.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and test (including PostgreSQL integration tests)
+        env:
+          SABBATH_TEST_POSTGRES_URL: jdbc:postgresql://localhost:5432/sabbath_hours_test
+          SABBATH_TEST_POSTGRES_USER: sabbath
+          SABBATH_TEST_POSTGRES_PASSWORD: ci-only-password
+        run: ./mvnw -B verify
+
+      - name: Fail if the PostgreSQL tests were skipped
+        run: |
+          report=target/surefire-reports/TEST-io.github.bdeeker.sabbathhours.location.PostgresIntegrationTest.xml
+          test -f "$report"
+          grep -q 'skipped="0"' "$report"

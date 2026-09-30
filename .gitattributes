@@ -1,2 +1,4 @@
-/mvnw text eol=lf
+# Store text with LF line endings in the repository, whatever the contributor's OS.
+* text=auto eol=lf
 *.cmd text eol=crlf
+*.jar binary
