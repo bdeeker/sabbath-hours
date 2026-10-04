@@ -125,6 +125,10 @@ To also run the PostgreSQL integration tests locally, set `SABBATH_TEST_POSTGRES
 - **Security:** stateless API-key authentication with a constant-time comparison. It fails closed when unconfigured, and refuses to start with a key under 32 characters. Reads are open with CORS, and every other route is denied by default.
 - **Build hygiene:** every `javac` lint check is on and any warning fails the build. GitHub Actions are pinned to commit SHAs, and the Maven download is checksum-verified.
 
+## Feedback
+
+Questions and bug reports are welcome in [GitHub Issues](https://github.com/bdeeker/sabbath-hours/issues).
+
 ## License
 
 [MIT](LICENSE) © 2026 Brian Deeker
